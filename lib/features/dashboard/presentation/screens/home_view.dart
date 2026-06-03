@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:mutaah_app/core/theme/colors/app_colors.dart';
+import 'package:mutaah_app/features/dashboard/presentation/screens/Contact_us_view.dart';
+import 'package:mutaah_app/features/dashboard/presentation/screens/Support_view.dart';
+import 'package:mutaah_app/features/dashboard/presentation/screens/auth_screen.dart';
+import 'package:mutaah_app/features/dashboard/presentation/screens/login_screen.dart';
 import 'package:mutaah_app/features/dashboard/presentation/screens/notifications_screen.dart';
 
 enum ProductStatus { available, rented, suspended }
 
 class HomeView extends StatelessWidget {
-  const HomeView({super.key});
+  // 1. تعريف الدالة المستلمة من الـ Dashboard لتغيير الواجهة
+  final VoidCallback onProfileTap;
+
+  // 2. تحديث الـ Constructor ليكون البارامتر مطلوباً (required)
+  const HomeView({
+    super.key,
+    required this.onProfileTap,
+  });
 
   static const LinearGradient _grad = LinearGradient(
     begin: Alignment.topRight,
@@ -20,218 +31,213 @@ class HomeView extends StatelessWidget {
     return Material(
       color: AppColors.backgroundPage,
       child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
+        physics: const BouncingScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
 
-                // ═══════════════════════════════════════════
-                // TOP BAR: يسار جرس | وسط مُتاح | يمين قائمة
-                // ═══════════════════════════════════════════
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+              // ═══════════════════════════════════════════
+              // TOP BAR: يسار جرس | وسط مُتاح | يمين قائمة
+              // ═══════════════════════════════════════════
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
 
-                    // 🔔 يسار — جرس الإشعارات (صفحة مستقلة)
-                    GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const NotificationsScreen(),
-                        ),
+                  // 🔔 يسار — جرس الإشعارات (صفحة مستقلة)
+                  GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationsScreen(),
                       ),
-                      child: SizedBox(
-                        width: 40,
-                        height: 40,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            const Icon(
-                              Icons.notifications_none_rounded,
-                              color: AppColors.primary,
-                              size: 26,
-                            ),
-                            Positioned(
-                              top: 7,
-                              right: 7,
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: AppColors.error,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppColors.backgroundCard,
-                                    width: 1.5,
-                                  ),
+                    ),
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          const Icon(
+                            Icons.notifications_none_rounded,
+                            color: AppColors.primary,
+                            size: 26,
+                          ),
+                          Positioned(
+                            top: 7,
+                            right: 7,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: AppColors.error,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.backgroundCard,
+                                  width: 1.5,
                                 ),
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
+                  ),
 
-                    // 中 وسط — اسم المنصة بالـ gradient
-                    ShaderMask(
-                      shaderCallback: (bounds) => _grad.createShader(bounds),
-                      child: const Text(
-                        'مُتاح',
-                        style: TextStyle(
-                          fontFamily: 'Cairo',
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
+                  // 中 وسط — اسم المنصة بالـ gradient
+                  ShaderMask(
+                    shaderCallback: (bounds) => _grad.createShader(bounds),
+                    child: const Text(
+                      'مُتاح',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
                       ),
                     ),
+                  ),
 
-                    // ⋮ يمين — قائمة البروفايل المنسدلة
-                    PopupMenuButton<String>(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: _border),
-                      ),
-                      color: AppColors.backgroundCard,
-                      elevation: 8,
-                      shadowColor: AppColors.primary.withOpacity(0.15),
-                      icon: const Icon(
-                        Icons.person_outline_rounded,
-                        color: AppColors.primary,
-                        size: 26,
-                      ),
-                      onSelected: (value) {
-                        switch (value) {
-                          case 'profile':
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const UserProfileScreen(),
-                              ),
-                            );
-                            break;
-                          case 'contact':
-                            // Navigator.push(context, MaterialPageRoute(builder: (context) => const ContactUsScreen()));
-                            break;
-                          case 'support':
-                            // Navigator.push(context, MaterialPageRoute(builder: (context) => const SupportScreen()));
-                            break;
-                          case 'logout':
-                            // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
-                            break;
-                        }
-                      },
-                      itemBuilder: (BuildContext context) => [
-                        _popupItem(value: 'profile', label: 'الملف الشخصي',        icon: Icons.person_outline_rounded,  color: AppColors.primary),
-                        _popupItem(value: 'contact', label: 'تواصل معنا',           icon: Icons.mail_outline_rounded,    color: AppColors.primary),
-                        _popupItem(value: 'support', label: 'الدعم الفني والإبلاغ', icon: Icons.support_agent_rounded,   color: AppColors.primary),
-                        const PopupMenuDivider(height: 1),
-                        _popupItem(value: 'logout',  label: 'تسجيل الخروج',        icon: Icons.logout_rounded,          color: AppColors.error, isDestructive: true),
-                      ],
+                  // ⋮ يمين — قائمة البروفايل المنسدلة
+                  PopupMenuButton<String>(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(color: _border),
+                    ),
+                    color: AppColors.backgroundCard,
+                    elevation: 8,
+                    shadowColor: AppColors.primary.withOpacity(0.15),
+                    icon: const Icon(
+                      Icons.person_outline_rounded,
+                      color: AppColors.primary,
+                      size: 26,
+                    ),
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'profile':
+                          // 3. تشغيل الدالة لتغيير الشاشة في الـ Dashboard بدلاً من الـ Navigator القديم
+                          onProfileTap();
+                          break;
+                        case 'contact':
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ContactUsView()));
+                          break;
+                        case 'support':
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const SupportView()));
+                          break;
+                        case 'logout':
+                           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AuthScreen()));
+                          break;
+                      }
+                    },
+                    itemBuilder: (BuildContext context) => [
+                      _popupItem(value: 'profile', label: 'الملف الشخصي',        icon: Icons.person_outline_rounded,  color: AppColors.primary),
+                      _popupItem(value: 'contact', label: 'تواصل معنا',           icon: Icons.mail_outline_rounded,    color: AppColors.primary),
+                      _popupItem(value: 'support', label: 'الدعم الفني والإبلاغ', icon: Icons.support_agent_rounded,   color: AppColors.primary),
+                      const PopupMenuDivider(height: 1),
+                      _popupItem(value: 'logout',  label: 'تسجيل الخروج',        icon: Icons.logout_rounded,          color: AppColors.error, isDestructive: true),
+                    ],
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // ═══════════════════════════════════════════
+              // حقل البحث
+              // ═══════════════════════════════════════════
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundCard,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: _border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.08),
+                      blurRadius: 3,
+                      offset: const Offset(0, 1),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 20),
-
-                // ═══════════════════════════════════════════
-                // حقل البحث
-                // ═══════════════════════════════════════════
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.backgroundCard,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _border),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.08),
-                        blurRadius: 3,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
+                child: const TextField(
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 14,
+                    color: AppColors.text1,
                   ),
-                  child: TextField(
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(
+                  decoration: InputDecoration(
+                    hintText: 'ابحث عن أدوات، كاميرات، مولدات...',
+                    hintStyle: TextStyle(
                       fontFamily: 'Cairo',
                       fontSize: 14,
-                      color: AppColors.text1,
+                      color: AppColors.text3,
                     ),
-                    decoration: const InputDecoration(
-                      hintText: 'ابحث عن أدوات، كاميرات، مولدات...',
-                      hintStyle: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 14,
-                        color: AppColors.text3,
-                      ),
-                      prefixIcon: Icon(Icons.search_rounded, color: AppColors.text3, size: 22),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                    ),
+                    prefixIcon: Icon(Icons.search_rounded, color: AppColors.text3, size: 22),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                   ),
                 ),
+              ),
 
-                const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-                // ═══════════════════════════════════════════
-                // أزرار التصنيفات
-                // ═══════════════════════════════════════════
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Directionality(
+              // ═══════════════════════════════════════════
+              // أزرار التصنيفات
+              // ═══════════════════════════════════════════
+              Align(
+                alignment: Alignment.centerRight,
+                child: Directionality(
                   textDirection: TextDirection.rtl,
                   child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildCategoryButton(label: 'الكل',       icon: Icons.grid_view_rounded,     isActive: true),
-                      const SizedBox(width: 10),
-                      _buildCategoryButton(label: 'إلكترونيات', icon: Icons.devices_other_rounded, isActive: false),
-                      const SizedBox(width: 10),
-                      _buildCategoryButton(label: 'أدوات',      icon: Icons.construction_rounded,  isActive: false),
-                    ],
-                  ),
-                  ),
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildCategoryButton(label: 'الكل',       icon: Icons.grid_view_rounded,     isActive: true),
+                        const SizedBox(width: 10),
+                        _buildCategoryButton(label: 'إلكترونيات', icon: Icons.devices_other_rounded, isActive: false),
+                        const SizedBox(width: 10),
+                        _buildCategoryButton(label: 'أدوات',      icon: Icons.construction_rounded,  isActive: false),
+                      ],
+                    ),
                   ),
                 ),
+              ),
 
-                const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-                // ═══════════════════════════════════════════
-                // قائمة المنتجات
-                // ═══════════════════════════════════════════
-                _buildProductCard(
-                  title: 'مولد كهربائي',
-                  location: 'غزة، الرمال',
-                  status: ProductStatus.available,
-                  price: '40 ₪',
-                  period: 'ساعة',
-                  imagePath: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=1000&auto=format&fit=crop',
-                ),
-                _buildProductCard(
-                  title: 'مثقاب كهربائي',
-                  location: 'غزة، الصحابة',
-                  status: ProductStatus.rented,
-                  price: '25 ₪',
-                  period: 'ساعة',
-                  imagePath: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?q=80&w=1000&auto=format&fit=crop',
-                ),
-                _buildProductCard(
-                  title: 'لابتوب ديل XPS 15',
-                  location: 'غزة، النصر',
-                  status: ProductStatus.suspended,
-                  price: '30 ₪',
-                  period: 'ساعة',
-                  imagePath: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?q=80&w=1000&auto=format&fit=crop',
-                ),
-              ],
-            ),
+              // ═══════════════════════════════════════════
+              // قائمة المنتجات
+              // ═══════════════════════════════════════════
+              _buildProductCard(
+                title: 'مولد كهربائي',
+                location: 'غزة، الرمال',
+                status: ProductStatus.available,
+                price: '40 ₪',
+                period: 'ساعة',
+                imagePath: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=1000&auto=format&fit=crop',
+              ),
+              _buildProductCard(
+                title: 'مثقاب كهربائي',
+                location: 'غزة، الصحابة',
+                status: ProductStatus.rented,
+                price: '25 ₪',
+                period: 'ساعة',
+                imagePath: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?q=80&w=1000&auto=format&fit=crop',
+              ),
+              _buildProductCard(
+                title: 'لابتوب ديل XPS 15',
+                location: 'غزة، النصر',
+                status: ProductStatus.suspended,
+                price: '30 ₪',
+                period: 'ساعة',
+                imagePath: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?q=80&w=1000&auto=format&fit=crop',
+              ),
+            ],
           ),
         ),
-      );
-    
+      ),
+    );
   }
 
   // ─── PopupMenuItem مساعد ───
@@ -245,7 +251,7 @@ class HomeView extends StatelessWidget {
     return PopupMenuItem<String>(
       value: value,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Text(
             label,
@@ -498,50 +504,6 @@ class HomeView extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// شاشة البروفايل
-// ─────────────────────────────────────────────
-class UserProfileScreen extends StatelessWidget {
-  const UserProfileScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundPage,
-      appBar: AppBar(
-        backgroundColor: AppColors.backgroundCard,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text(
-          'حسابي الشخصي',
-          style: TextStyle(
-            fontFamily: 'Cairo',
-            fontWeight: FontWeight.bold,
-            color: AppColors.text1,
-            fontSize: 18,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.text1, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: const Center(
-        child: Text(
-          'مرحباً بك في صفحة المستخدم 👤\n(هنا ستكون تفاصيل الحساب والإعدادات)',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: 'Cairo',
-            fontSize: 15,
-            color: AppColors.text2,
-            height: 1.6,
-          ),
-        ),
       ),
     );
   }

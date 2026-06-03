@@ -27,7 +27,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   // ── Countdown Timer ──
   late Timer _timer;
-  int _secondsRemaining = 4 * 60 + 32; // 04:32
+  int _secondsRemaining = 2 * 60 ; // 04:32
   bool _canResend = false;
   bool _isLoading = false;
   String? _errorMessage;
@@ -55,7 +55,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   // ── بدء العداد التنازلي ──
   void _startTimer() {
     _canResend = false;
-    _secondsRemaining = 4 * 60 + 32;
+    _secondsRemaining = 2 * 60 ;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsRemaining <= 0) {
         timer.cancel();
