@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mutaah_app/core/theme/colors/app_colors.dart';
 import 'package:mutaah_app/features/dashboard/presentation/screens/dashboard_screen.dart';
-import 'package:mutaah_app/features/dashboard/presentation/screens/forgot_password_screen.dart';
+import  'package:mutaah_app/features/dashboard/presentation/screens/forgot_password_screen.dart';
 
 // ─────────────────────────────────────────────
 // صفحة شروط الاستخدام
@@ -155,13 +155,26 @@ class _AuthScreenState extends State<AuthScreen> {
   bool isPasswordVisible = false;
   bool isConfirmPasswordVisible = false;
 
-  final TextEditingController _passwordController = TextEditingController();
+  // ── Controllers — أسماء الحقول كما هي في الـ API (Backend) ──
+  // full_name      → حقل الاسم الكامل
+  // username       → حقل اسم المستخدم
+  // phone          → حقل رقم الهاتف
+  // governorate    → المحافظة المختارة (selectedGovernorate)
+  // district       → الحي المختار (selectedDistrict)
+  // password_hash  → كلمة المرور (يتم هاشها قبل الإرسال في الـ API layer)
+  final TextEditingController _fullNameController    = TextEditingController(); // → full_name
+  final TextEditingController _usernameController    = TextEditingController(); // → username
+  final TextEditingController _phoneController       = TextEditingController(); // → phone
+  final TextEditingController _passwordController    = TextEditingController(); // → password_hash
   final TextEditingController _confirmPasswordController = TextEditingController();
-  final TextEditingController _emailLoginController = TextEditingController();
+  final TextEditingController _emailLoginController  = TextEditingController(); // → username أو phone
   String? _passwordError;
 
   @override
   void dispose() {
+    _fullNameController.dispose();
+    _usernameController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _emailLoginController.dispose();
@@ -173,7 +186,6 @@ class _AuthScreenState extends State<AuthScreen> {
       final pass    = _passwordController.text;
       final confirm = _confirmPasswordController.text;
 
-      // تحقق من التطابق فقط إذا الحقلين مكتوبين
       if (pass.isNotEmpty && confirm.isNotEmpty && pass != confirm) {
         setState(() => _passwordError = 'كلمتا المرور غير متطابقتين ❌');
         return;
@@ -184,6 +196,24 @@ class _AuthScreenState extends State<AuthScreen> {
       }
     }
     setState(() => _passwordError = null);
+
+    // ── لما الـ API جاهز، ابعتي البيانات هيك ──
+    // POST /api/auth/register
+    // {
+    //   "full_name":   _fullNameController.text,
+    //   "username":    _usernameController.text,
+    //   "phone":       _phoneController.text,
+    //   "governorate": selectedGovernorate,
+    //   "district":    selectedDistrict,
+    //   "password_hash": _passwordController.text,  // الهاش بيصير بالـ backend
+    // }
+    //
+    // POST /api/auth/login
+    // {
+    //   "username": _emailLoginController.text,  // أو phone
+    //   "password_hash": _passwordController.text,
+    // }
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const DashboardScreen()),
@@ -266,10 +296,10 @@ class _AuthScreenState extends State<AuthScreen> {
                           if (!isLoginTab) ...[
                             // ── إنشاء حساب ──
                             _buildLabel('الاسم الكامل'),
-                            _buildTextField(hint: 'محمد أحمد الخطيب', icon: Icons.person_outline_rounded),
+                            _buildTextField(hint: 'محمد أحمد الخطيب', icon: Icons.person_outline_rounded, controller: _fullNameController), // full_name
 
                             _buildLabel('اسم المستخدم'),
-                            _buildTextField(hint: 'ahmed@gmail.com', icon: Icons.alternate_email_rounded, isLtr: true),
+                            _buildTextField(hint: 'ahmed@gmail.com', icon: Icons.alternate_email_rounded, isLtr: true, controller: _usernameController), // username
 
                             _buildLabel('رقم الهاتف'),
                             _buildPhoneField(),
@@ -493,7 +523,7 @@ class _AuthScreenState extends State<AuthScreen> {
         border: Border.all(color: AppColors.border),
       ),
       child: DropdownButtonFormField<String>(
-        value: selectedGovernorate,
+        value: selectedGovernorate, // → governorate
         hint: const Text('اختر المحافظة', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.text3)),
         isExpanded: true,
         icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.text4),
@@ -524,7 +554,7 @@ class _AuthScreenState extends State<AuthScreen> {
         border: Border.all(color: AppColors.border),
       ),
       child: DropdownButtonFormField<String>(
-        value: selectedDistrict,
+        value: selectedDistrict, // → district
         disabledHint: const Text('اختر المحافظة أولاً', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.text4)),
         hint: const Text('اختر المنطقة / الحي', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.text3)),
         isExpanded: true,

@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:mutaah_app/core/theme/colors/app_colors.dart';
 import '../widgets/notification_item.dart';
 
+// ── جدول notifications من الـ API ──
+// GET /api/notifications
+// fields:
+//   type    → ['rental_status','payment_update','identity_verification','plan_expired']
+//   title   → title
+//   message → description (في الـ NotificationItem)
+//   is_read → isUnread = !is_read
+//   ref_id  → معرّف العنصر المرتبط (منتج أو طلب)
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // إذا في صفحة قبلها (مفتوحة بـ Navigator.push) يظهر زر الرجوع تلقائياً
     final bool canPop = Navigator.canPop(context);
 
     return Scaffold(
@@ -42,6 +49,8 @@ class NotificationsScreen extends StatelessWidget {
             ),
             const Spacer(),
             TextButton(
+              // ── وقت الـ API: PUT /api/notifications/read-all ──
+              // بيحدث is_read = true لكل الإشعارات
               onPressed: () {},
               child: const Text(
                 'اعتبر مقروءة',
@@ -59,46 +68,54 @@ class NotificationsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
 
+          // type: 'rental_status' | title → title | message → description
+          // is_read: false → isUnread: true | ref_id → rental_request id
+          // onAccept → PUT /api/rental_requests/{ref_id} { owner_status: 'accepted' }
+          // onReject → PUT /api/rental_requests/{ref_id} { owner_status: 'rejected' }
           NotificationItem(
-            title: 'طلب استئجار جديد',
-            description: 'أحمد محمد يريد استئجار "كاميرا سوني A7 III"',
+            title: 'طلب استئجار جديد',           // → title
+            description: 'أحمد محمد يريد استئجار "كاميرا سوني A7 III"', // → message
             time: 'منذ 5 د',
             icon: Icons.assignment_outlined,
             iconColor: AppColors.primary,
-            isUnread: true,
+            isUnread: true,                        // → !is_read
             hasAcceptRejectButtons: true,
             onAccept: () {},
             onReject: () {},
           ),
 
+          // type: 'payment_update' | is_read: false → isUnread: true
           const NotificationItem(
-            title: 'تم استلام مبلغ الرهن',
-            description: 'تم احتجاز ₪ 300 داخل المنصة بنجاح',
+            title: 'تم استلام مبلغ الرهن',        // → title
+            description: 'تم احتجاز ₪ 300 داخل المنصة بنجاح', // → message
             time: 'منذ 1 س',
             icon: Icons.lock_outline_rounded,
             iconColor: AppColors.warning,
-            isUnread: true,
+            isUnread: true,                        // → !is_read
           ),
 
+          // type: 'rental_status' | is_read: true → isUnread: false
           const NotificationItem(
-            title: 'تم إعادة المنتج بسلامة',
-            description: 'أعادت سمر خالد "المثقاب"',
+            title: 'تم إعادة المنتج بسلامة',       // → title
+            description: 'أعادت سمر خالد "المثقاب"', // → message
             time: 'أمس',
             icon: Icons.assignment_turned_in_outlined,
             iconColor: AppColors.success,
-            isUnread: false,
+            isUnread: false,                       // → !is_read
           ),
 
+          // type: 'rental_status' | is_read: true → isUnread: false
+          // ref_id → rental_request id لاستكمال الإيجار
           NotificationItem(
-            title: 'تم قبول طلبك!',
-            description: 'وافق أحمد على طلب استئجار "كاميرا سوني A7 III"',
+            title: 'تم قبول طلبك!',               // → title
+            description: 'وافق أحمد على طلب استئجار "كاميرا سوني A7 III"', // → message
             time: '3 أيام',
             icon: Icons.check_circle_outline_rounded,
             iconColor: AppColors.primary,
-            isUnread: false,
+            isUnread: false,                       // → !is_read
             hasActionLongButton: true,
             longButtonText: 'اضغط هنا لاستكمال عملية الإيجار',
-            onLongButtonTap: () {},
+            onLongButtonTap: () {},                // → navigate using ref_id
           ),
         ],
       ),

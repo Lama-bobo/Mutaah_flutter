@@ -3,16 +3,19 @@ import 'package:mutaah_app/core/theme/colors/app_colors.dart';
 import 'package:mutaah_app/features/dashboard/presentation/screens/Contact_us_view.dart';
 import 'package:mutaah_app/features/dashboard/presentation/screens/Support_view.dart';
 import 'package:mutaah_app/features/dashboard/presentation/screens/auth_screen.dart';
-import 'package:mutaah_app/features/dashboard/presentation/screens/login_screen.dart';
 import 'package:mutaah_app/features/dashboard/presentation/screens/notifications_screen.dart';
 
+// ── status من جدول Products ──
+// القيم بالـ API: 'active' | 'frozen' | 'deleted'
+// active  → available (متاح)
+// frozen  → suspended (مجمد)
+// rented  → رالة مشتقة من rental_requests
 enum ProductStatus { available, rented, suspended }
 
 class HomeView extends StatelessWidget {
-  // 1. تعريف الدالة المستلمة من الـ Dashboard لتغيير الواجهة
+  // ── onProfileTap: لفتح صفحة البروفايل من الـ Dashboard ──
   final VoidCallback onProfileTap;
 
-  // 2. تحديث الـ Constructor ليكون البارامتر مطلوباً (required)
   const HomeView({
     super.key,
     required this.onProfileTap,
@@ -45,7 +48,7 @@ class HomeView extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
 
-                  // 🔔 يسار — جرس الإشعارات (صفحة مستقلة)
+                  // 🔔 يسار — جرس الإشعارات
                   GestureDetector(
                     onTap: () => Navigator.push(
                       context,
@@ -85,7 +88,7 @@ class HomeView extends StatelessWidget {
                     ),
                   ),
 
-                  // 中 وسط — اسم المنصة بالـ gradient
+                  // 中 وسط — اسم المنصة
                   ShaderMask(
                     shaderCallback: (bounds) => _grad.createShader(bounds),
                     child: const Text(
@@ -116,17 +119,23 @@ class HomeView extends StatelessWidget {
                     onSelected: (value) {
                       switch (value) {
                         case 'profile':
-                          // 3. تشغيل الدالة لتغيير الشاشة في الـ Dashboard بدلاً من الـ Navigator القديم
+                          // يفتح صفحة البروفايل عبر الـ Dashboard (مش Navigator)
                           onProfileTap();
                           break;
                         case 'contact':
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ContactUsView()));
+                          Navigator.push(context, MaterialPageRoute(
+                            builder: (context) => const ContactUsView(),
+                          ));
                           break;
                         case 'support':
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const SupportView()));
+                          Navigator.push(context, MaterialPageRoute(
+                            builder: (context) => const SupportView(),
+                          ));
                           break;
                         case 'logout':
-                           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AuthScreen()));
+                          Navigator.pushReplacement(context, MaterialPageRoute(
+                            builder: (context) => const AuthScreen(),
+                          ));
                           break;
                       }
                     },
@@ -145,6 +154,7 @@ class HomeView extends StatelessWidget {
 
               // ═══════════════════════════════════════════
               // حقل البحث
+              // ── وقت الـ API: GET /api/products?search=query&category=x ──
               // ═══════════════════════════════════════════
               Container(
                 decoration: BoxDecoration(
@@ -184,6 +194,7 @@ class HomeView extends StatelessWidget {
 
               // ═══════════════════════════════════════════
               // أزرار التصنيفات
+              // ── وقت الـ API: GET /api/products?category=x ──
               // ═══════════════════════════════════════════
               Align(
                 alignment: Alignment.centerRight,
@@ -208,6 +219,11 @@ class HomeView extends StatelessWidget {
 
               // ═══════════════════════════════════════════
               // قائمة المنتجات
+              // ── وقت الـ API: استبدلي بـ ListView.builder ──
+              // GET /api/products
+              // fields: { title, product_images, price_per_hour,
+              //           deposit_amount, status, category }
+              // + owner: { governorate, district } من جدول Users
               // ═══════════════════════════════════════════
               _buildProductCard(
                 title: 'مولد كهربائي',
@@ -251,7 +267,7 @@ class HomeView extends StatelessWidget {
     return PopupMenuItem<String>(
       value: value,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
           Text(
             label,
@@ -285,7 +301,11 @@ class HomeView extends StatelessWidget {
           color: isActive ? Colors.transparent : _border,
         ),
         boxShadow: isActive
-            ? [BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 3))]
+            ? [BoxShadow(
+                color: AppColors.primary.withOpacity(0.25),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              )]
             : null,
       ),
       child: Row(
@@ -308,6 +328,9 @@ class HomeView extends StatelessWidget {
   }
 
   // ─── تفاصيل تاغ الحالة ───
+  // API value 'active'  → ProductStatus.available → 'متاح'
+  // API value 'frozen'  → ProductStatus.suspended → 'مجمد'
+  // rental_requests exists → ProductStatus.rented → 'مؤجر'
   Map<String, dynamic> _getStatusDetails(ProductStatus status) {
     switch (status) {
       case ProductStatus.available:
@@ -335,6 +358,12 @@ class HomeView extends StatelessWidget {
   }
 
   // ─── كارد المنتج ───
+  // title      → title
+  // location   → governorate + district (جدول Users)
+  // price      → price_per_hour
+  // status     → status: ['active','frozen'] + rental_requests
+  // imagePath  → product_images[0]
+  // period     → ثابت 'ساعة'
   Widget _buildProductCard({
     required String title,
     required String location,
@@ -367,7 +396,6 @@ class HomeView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // الصورة + تاغ الحالة
           Stack(
             children: [
               ClipRRect(
@@ -402,15 +430,13 @@ class HomeView extends StatelessWidget {
               ),
             ],
           ),
-
-          // التفاصيل
           Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  title, // → title
                   style: const TextStyle(
                     fontFamily: 'Cairo',
                     fontSize: 16,
@@ -422,8 +448,12 @@ class HomeView extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      location,
-                      style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.text3),
+                      location, // → governorate + district
+                      style: const TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 12,
+                        color: AppColors.text3,
+                      ),
                     ),
                     const SizedBox(width: 3),
                     const Icon(Icons.location_on_outlined, size: 13, color: AppColors.text3),
@@ -433,8 +463,6 @@ class HomeView extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-
-                    // زر تأجر الآن / غير متاح
                     status == ProductStatus.available
                         ? Container(
                             decoration: BoxDecoration(
@@ -454,36 +482,52 @@ class HomeView extends StatelessWidget {
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,
                                 foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 9),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 22,
+                                  vertical: 9,
+                                ),
                               ),
                               child: const Text(
                                 'تأجر الآن',
-                                style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13),
+                                style: TextStyle(
+                                  fontFamily: 'Cairo',
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
                           )
                         : Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 9),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 22,
+                              vertical: 9,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.backgroundInput,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: _border),
                             ),
                             child: Text(
-                              status == ProductStatus.rented ? 'مؤجر حالياً' : 'غير متاح',
-                              style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.text3),
+                              status == ProductStatus.rented
+                                  ? 'مؤجر حالياً'
+                                  : 'غير متاح',
+                              style: const TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 13,
+                                color: AppColors.text3,
+                              ),
                             ),
                           ),
-
-                    // السعر
                     Row(
                       textDirection: TextDirection.rtl,
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
                         Text(
-                          price,
+                          price, // → price_per_hour
                           style: const TextStyle(
                             fontFamily: 'Cairo',
                             fontSize: 18,
@@ -491,10 +535,17 @@ class HomeView extends StatelessWidget {
                             color: AppColors.primaryDark,
                           ),
                         ),
-                        const Text(' / ', style: TextStyle(color: AppColors.text4, fontSize: 13)),
+                        const Text(
+                          ' / ',
+                          style: TextStyle(color: AppColors.text4, fontSize: 13),
+                        ),
                         Text(
                           period,
-                          style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.text3),
+                          style: const TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 12,
+                            color: AppColors.text3,
+                          ),
                         ),
                       ],
                     ),

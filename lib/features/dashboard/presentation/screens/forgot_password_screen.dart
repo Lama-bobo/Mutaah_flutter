@@ -5,11 +5,15 @@ import 'package:mutaah_app/core/theme/colors/app_colors.dart';
 
 // ─────────────────────────────────────────────
 // صفحة استعادة كلمة السر عبر OTP على الإيميل
-// المسار: lib/features/auth/presentation/screens/forgot_password_screen.dart
+// ── وقت الـ API ──
+// POST /api/auth/send-otp    → { "email": widget.email }
+// POST /api/auth/verify-otp  → { "email": widget.email, "otp": _otpValue }
+// POST /api/auth/reset-password → { "email", "otp", "password_hash" }
+// الحقل المرتبط بالـ Users table: email
 // ─────────────────────────────────────────────
 
 class ForgotPasswordScreen extends StatefulWidget {
-  /// الإيميل اللي أدخله المستخدم في صفحة تسجيل الدخول
+  // email ← من جدول Users حقل: email
   final String email;
 
   const ForgotPasswordScreen({super.key, required this.email});
@@ -19,17 +23,16 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  // ── Controllers لكل خانة من الـ 6 خانات ──
+  // ── 6 controllers + focusNodes للخانات ──
   final List<TextEditingController> _controllers =
       List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes =
       List.generate(6, (_) => FocusNode());
 
-  // ── Countdown Timer ──
   late Timer _timer;
-  int _secondsRemaining = 2 * 60 ; // 04:32
-  bool _canResend = false;
-  bool _isLoading = false;
+  int _secondsRemaining = 2 * 60;
+  bool _canResend  = false;
+  bool _isLoading  = false;
   String? _errorMessage;
 
   static const LinearGradient _grad = LinearGradient(
@@ -42,6 +45,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   void initState() {
     super.initState();
     _startTimer();
+    // فوكس على أول خانة تلقائياً لما الصفحة تفتح
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNodes[0].requestFocus();
+    });
   }
 
   @override
@@ -52,10 +59,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  // ── بدء العداد التنازلي ──
   void _startTimer() {
     _canResend = false;
-    _secondsRemaining = 2 * 60 ;
+    _secondsRemaining = 2 * 60;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsRemaining <= 0) {
         timer.cancel();
@@ -72,18 +78,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return '$m:$s';
   }
 
-  // ── قيمة الكود المدخل ──
   String get _otpValue => _controllers.map((c) => c.text).join();
 
-  // ── إعادة الإرسال ──
   Future<void> _resendCode() async {
     if (!_canResend) return;
     setState(() { _errorMessage = null; _isLoading = true; });
 
     // ── اربطي هنا بـ API ──
-    // await AuthRepository.sendOtp(email: widget.email);
+    // POST /api/auth/send-otp
+    // body: { "email": widget.email }
+    await Future.delayed(const Duration(seconds: 1));
 
-    await Future.delayed(const Duration(seconds: 1)); // مؤقت
     setState(() => _isLoading = false);
     _timer.cancel();
     _startTimer();
@@ -91,48 +96,36 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     _focusNodes[0].requestFocus();
   }
 
-  // ── تأكيد الكود ──
   Future<void> _verifyOtp() async {
     if (_otpValue.length < 6) {
       setState(() => _errorMessage = 'يرجى إدخال الكود كاملاً');
       return;
     }
-
     setState(() { _isLoading = true; _errorMessage = null; });
 
     // ── اربطي هنا بـ API ──
-    // final result = await AuthRepository.verifyOtp(
-    //   email: widget.email,
-    //   otp: _otpValue,
-    // );
-    // if (result.success) {
-    //   Navigator.pushReplacement(context,
-    //     MaterialPageRoute(builder: (_) => ResetPasswordScreen(token: result.token)));
-    // } else {
-    //   setState(() => _errorMessage = 'الكود غير صحيح أو منتهي الصلاحية');
-    // }
+    // POST /api/auth/verify-otp
+    // body: { "email": widget.email, "otp": _otpValue }
+    // if success → روحي لصفحة ResetPasswordScreen
+    // if failed  → setState(() => _errorMessage = 'الكود غير صحيح أو منتهي الصلاحية')
+    await Future.delayed(const Duration(seconds: 1));
 
-    await Future.delayed(const Duration(seconds: 1)); // مؤقت
     setState(() => _isLoading = false);
-
-    // مؤقت: روح لصفحة تسجيل الدخول
     if (mounted) Navigator.pop(context);
   }
 
-  // ── بناء خانة OTP واحدة ──
+  // ── خانة OTP واحدة ──
   Widget _buildOtpBox(int index) {
-    final isFilled = _controllers[index].text.isNotEmpty;
+    final isFilled  = _controllers[index].text.isNotEmpty;
     final isFocused = _focusNodes[index].hasFocus;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
-      width: 46,
-      height: 54,
+      width: 42,   // أصغر شوي عشان تقرب المسافات
+      height: 50,
       decoration: BoxDecoration(
-        color: isFilled
-            ? AppColors.primaryLight
-            : AppColors.backgroundInput,
-        borderRadius: BorderRadius.circular(12),
+        color: isFilled ? AppColors.primaryLight : AppColors.backgroundInput,
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: isFocused
               ? AppColors.primary
@@ -142,13 +135,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           width: isFocused ? 2 : 1,
         ),
         boxShadow: isFocused
-            ? [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 2))]
+            ? [BoxShadow(
+                color: AppColors.primary.withOpacity(0.2),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              )]
             : null,
       ),
       child: TextField(
         controller: _controllers[index],
-        focusNode: _focusNodes[index],
-        textAlign: TextAlign.center,
+        focusNode:  _focusNodes[index],
+        textAlign:  TextAlign.center,
         keyboardType: TextInputType.number,
         maxLength: 1,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -161,25 +158,33 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         decoration: const InputDecoration(
           counterText: '',
           border: InputBorder.none,
+          contentPadding: EdgeInsets.zero,
         ),
         onChanged: (value) {
           setState(() {});
-          if (value.isNotEmpty && index < 5) {
-            _focusNodes[index + 1].requestFocus();
-          } else if (value.isEmpty && index > 0) {
-            _focusNodes[index - 1].requestFocus();
+          if (value.isNotEmpty) {
+            // انتقل للخانة التالية فوراً
+            if (index < 5) {
+              _focusNodes[index + 1].requestFocus();
+            } else {
+              // اكتمل الكود — أغلق الكيبورد تلقائياً
+              FocusScope.of(context).unfocus();
+            }
+          } else {
+            // عند الحذف — ارجع للخانة السابقة
+            if (index > 0) _focusNodes[index - 1].requestFocus();
           }
-          // لو اكتملت الخانات الـ 6 تلقائياً
-          if (_otpValue.length == 6) FocusScope.of(context).unfocus();
         },
+        // دعم الـ Backspace الصريح
+        onTapOutside: (_) => FocusScope.of(context).unfocus(),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // إخفاء الإيميل — مثلاً: ah***@gmail.com
-    final emailParts = widget.email.split('@');
+    // إخفاء الإيميل — ah***@gmail.com
+    final emailParts  = widget.email.split('@');
     final maskedEmail = emailParts.length == 2
         ? '${emailParts[0].substring(0, (emailParts[0].length / 2).ceil())}***@${emailParts[1]}'
         : widget.email;
@@ -196,7 +201,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 children: [
                   const SizedBox(height: 20),
 
-                  // ── أيقونة OTP ──
+                  // ── أيقونة ──
                   Container(
                     width: 72,
                     height: 72,
@@ -208,7 +213,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           color: AppColors.primary.withOpacity(0.3),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
-                        )
+                        ),
                       ],
                     ),
                     child: const Icon(Icons.lock_reset_rounded, color: Colors.white, size: 32),
@@ -216,7 +221,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                   const SizedBox(height: 24),
 
-                  // ── الكارد الرئيسي ──
+                  // ── الكارد ──
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
@@ -235,7 +240,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
 
-                        // ── العنوان ──
                         const Text(
                           'استعادة كلمة السر',
                           style: TextStyle(
@@ -248,7 +252,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                         const SizedBox(height: 10),
 
-                        // ── النص التوضيحي ──
+                        // ── النص — بيعرض الإيميل مش الرقم ──
                         RichText(
                           textAlign: TextAlign.center,
                           text: TextSpan(
@@ -262,10 +266,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               const TextSpan(text: 'أرسلنا كود مكوّن من '),
                               const TextSpan(
                                 text: '6 أرقام',
-                                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text2),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.text2,
+                                ),
                               ),
-                              const TextSpan(text: ' إلى\n'),
+                              const TextSpan(text: ' إلى بريدك الإلكتروني\n'),
                               TextSpan(
+                                // email ← من جدول Users
                                 text: maskedEmail,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
@@ -277,33 +285,46 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                         ),
 
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 24),
 
-                        // ── خانات OTP ──
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: List.generate(6, _buildOtpBox),
+                        // ── الخانات الـ 6 — LTR عشان الأرقام تبدأ من اليسار ──
+                        Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(6, (index) => Row(
+                              children: [
+                                _buildOtpBox(index),
+                                if (index < 5) const SizedBox(width: 8),
+                              ],
+                            )),
+                          ),
                         ),
 
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 18),
 
                         // ── رسالة الخطأ ──
                         if (_errorMessage != null) ...[
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 14),
+                              const Icon(Icons.error_outline_rounded,
+                                  color: AppColors.error, size: 14),
                               const SizedBox(width: 6),
                               Text(
                                 _errorMessage!,
-                                style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.error),
+                                style: const TextStyle(
+                                  fontFamily: 'Cairo',
+                                  fontSize: 12,
+                                  color: AppColors.error,
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
                         ],
 
-                        // ── العداد التنازلي ──
+                        // ── العداد ──
                         Text(
                           'ينتهي الكود بعد $_timerText',
                           style: const TextStyle(
@@ -322,7 +343,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           children: [
                             const Text(
                               'لم يصلك الكود؟ ',
-                              style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.text3),
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 12,
+                                color: AppColors.text3,
+                              ),
                             ),
                             GestureDetector(
                               onTap: _canResend ? _resendCode : null,
@@ -332,15 +357,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                   fontFamily: 'Cairo',
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: _canResend ? AppColors.primary : AppColors.text4,
-                                  decoration: _canResend ? TextDecoration.underline : null,
+                                  color: _canResend
+                                      ? AppColors.primary
+                                      : AppColors.text4,
+                                  decoration: _canResend
+                                      ? TextDecoration.underline
+                                      : null,
                                 ),
                               ),
                             ),
                           ],
                         ),
 
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 22),
 
                         // ── زر تأكيد الكود ──
                         GestureDetector(
@@ -350,7 +379,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             height: 50,
                             decoration: BoxDecoration(
                               gradient: _otpValue.length == 6 ? _grad : null,
-                              color: _otpValue.length < 6 ? AppColors.backgroundInput : null,
+                              color: _otpValue.length < 6
+                                  ? AppColors.backgroundInput
+                                  : null,
                               borderRadius: BorderRadius.circular(12),
                               border: _otpValue.length < 6
                                   ? Border.all(color: AppColors.border)
@@ -385,9 +416,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         // ── رجوع لتسجيل الدخول ──
                         GestureDetector(
                           onTap: () => Navigator.pop(context),
-                          child: Row(
+                          child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
+                            children: [
                               Text(
                                 'العودة لتسجيل الدخول',
                                 style: TextStyle(
@@ -397,7 +428,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                 ),
                               ),
                               SizedBox(width: 4),
-                              Icon(Icons.arrow_forward_rounded, size: 16, color: AppColors.text2),
+                              Icon(Icons.arrow_forward_rounded,
+                                  size: 16, color: AppColors.text2),
                             ],
                           ),
                         ),
